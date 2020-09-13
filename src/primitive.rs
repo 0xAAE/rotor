@@ -97,7 +97,65 @@ mod test_hashing {
 mod test_salsa20 {}
 
 #[cfg(test)]
-mod test_crypto_box {}
+mod test_crypto_box {
+    use crypto_box::{aead::Aead, Box, PublicKey, SecretKey, KEY_SIZE};
+
+    #[test]
+    fn encryption_decryption() {
+        let mut rng = rand::thread_rng();
+        // prepare keys
+        // alice
+        let alice_secret_key = SecretKey::generate(&mut rng);
+        assert_eq!(alice_secret_key.clone().to_bytes().len(), KEY_SIZE);
+        let alice_public_key = PublicKey::from(&alice_secret_key);
+        let alice_public_key_bytes = alice_secret_key.public_key().as_bytes().clone();
+        assert_eq!(
+            alice_public_key.as_bytes().clone(),
+            alice_public_key_bytes.clone()
+        );
+        assert_eq!(alice_public_key_bytes.len(), KEY_SIZE);
+        // bob
+        let bob_secret_key = SecretKey::generate(&mut rng);
+        assert_eq!(bob_secret_key.clone().to_bytes().len(), KEY_SIZE);
+        let bob_public_key = PublicKey::from(&bob_secret_key);
+        let bob_public_key_bytes = bob_public_key.as_bytes().clone();
+        assert_eq!(
+            bob_public_key.as_bytes().clone(),
+            bob_public_key_bytes.clone()
+        );
+        assert_eq!(bob_public_key_bytes.len(), KEY_SIZE);
+
+        // Alice is encrypting
+
+        // Create a `Box` by performing Diffie-Hellman key agreement between
+        // the two keys.
+        let alice_box = Box::new(&bob_public_key, &alice_secret_key);
+        // Get a random nonce to encrypt the message under
+        let nonce = crypto_box::generate_nonce(&mut rng);
+        // Message to encrypt
+        let plaintext = b"There is our shared bitcoin wallet private key";
+        // Encrypt the message using the box
+        let ciphertext = alice_box.encrypt(&nonce, &plaintext[..]).unwrap();
+
+        // Bob is decrypting
+
+        // Deserialize Alice's public key from bytes
+        let alice_public_key = PublicKey::from(alice_public_key_bytes);
+        // Bob can compute the same Box as Alice by performing the reciprocal
+        // key exchange operation.
+        let bob_box = Box::new(&alice_public_key, &bob_secret_key);
+        // Decrypt the message, using the same randomly generated nonce
+        let decrypted_plaintext = match bob_box.decrypt(&nonce, &ciphertext[..]) {
+            Ok(d) => d,
+            Err(e) => format!("{}", e).into(),
+        };
+
+        assert_eq!(
+            std::str::from_utf8(&plaintext[..]).unwrap(),
+            std::str::from_utf8(&decrypted_plaintext[..]).unwrap()
+        );
+    }
+}
 
 #[cfg(test)]
 mod test_base58 {}
