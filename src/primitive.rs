@@ -64,3 +64,40 @@ mod test_keys_signing {
         assert!(verified.is_err());
     }
 }
+
+#[cfg(test)]
+mod test_hashing {
+    use multihash::{wrap, Blake2b256, Code, Multihash};
+
+    #[test]
+    fn test_hashing_blake2b_256() {
+        let mh = Blake2b256::digest(b"hello world");
+        // valid multihash
+        let mh1 = mh.clone();
+        // algorithm
+        assert_ne!(mh.algorithm(), Code::Sha2_256);
+        assert_eq!(mh.algorithm(), Code::Blake2b256);
+        let mh2 = Multihash::from_bytes(mh.into_bytes()).unwrap();
+        assert_eq!(mh1, mh2);
+        // invalid multihash
+        assert!(Multihash::from_bytes(vec![1, 2, 3]).is_err());
+    }
+
+    #[test]
+    fn test_hash_wrapping() {
+        let mh = Blake2b256::digest(b"hello world");
+        let digest = mh.digest();
+        let wrapped: Multihash = wrap(Code::Blake2b256, &digest);
+        assert_eq!(wrapped.digest(), digest);
+        assert_eq!(wrapped.algorithm(), Code::Blake2b256);
+    }
+}
+
+#[cfg(test)]
+mod test_salsa20 {}
+
+#[cfg(test)]
+mod test_crypto_box {}
+
+#[cfg(test)]
+mod test_base58 {}
