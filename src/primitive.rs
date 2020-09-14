@@ -94,7 +94,57 @@ mod test_hashing {
 }
 
 #[cfg(test)]
-mod test_salsa20 {}
+mod test_salsa20 {
+    use ed25519_dalek::Keypair;
+    use rand::rngs::OsRng;
+    use salsa20::stream_cipher::{NewStreamCipher, SyncStreamCipher, SyncStreamCipherSeek};
+    use salsa20::{Key, Nonce, Salsa20};
+
+    #[test]
+    fn test_encrypting() {
+        assert_eq!(ed25519_dalek::SECRET_KEY_LENGTH, salsa20::KEY_SIZE);
+        let mut data = [1, 2, 3, 4, 5, 6, 7];
+
+        let key = Key::from_slice(b"an example very very secret key.");
+        let nonce = Nonce::from_slice(b"a nonce.");
+
+        // create cipher instance
+        let mut cipher = Salsa20::new(&key, &nonce);
+
+        // apply keystream (encrypt)
+        cipher.apply_keystream(&mut data);
+        assert_eq!(data, [182, 14, 133, 113, 210, 25, 165]);
+
+        // seek to the keystream beginning and apply it again to the `data` (decrypt)
+        cipher.seek(0);
+        cipher.apply_keystream(&mut data);
+        assert_eq!(data, [1, 2, 3, 4, 5, 6, 7]);
+    }
+
+    const SALSA_NONCE_SIZE: usize = 8;
+
+    #[test]
+    fn test_encrypting_with_ed25519_keys() {
+        let src = b"Me main bitcoin wallet key";
+        let mut data = src.clone();
+
+        let mut csprng = OsRng {};
+        let keypair: Keypair = Keypair::generate(&mut csprng);
+
+        let key = Key::from_slice(keypair.secret.as_bytes());
+        let nonce = Nonce::from_slice(&keypair.public.as_bytes()[..SALSA_NONCE_SIZE]);
+
+        // create cipher instance
+        let mut cipher = Salsa20::new(&key, &nonce);
+
+        // apply keystream (encrypt)
+        cipher.apply_keystream(&mut data);
+        // seek to the keystream beginning and apply it again to the `data` (decrypt)
+        cipher.seek(0);
+        cipher.apply_keystream(&mut data);
+        assert_eq!(data, src.clone());
+    }
+}
 
 #[cfg(test)]
 mod test_crypto_box {
@@ -158,4 +208,46 @@ mod test_crypto_box {
 }
 
 #[cfg(test)]
-mod test_base58 {}
+mod test_base58 {
+    use bs58::{decode, encode};
+    use ed25519_dalek::Keypair;
+
+    #[test]
+    fn test_base58() {
+        let mut rng = rand::thread_rng();
+        let keypair: Keypair = Keypair::generate(&mut rng);
+
+        let encoded = encode(keypair.public.as_bytes()).into_string();
+        let decoded = decode(encoded).into_vec().unwrap();
+        assert_eq!(decoded, keypair.public.as_bytes());
+    }
+}
+
+#[cfg(test)]
+mod test_mixed {
+    use ed25519_dalek::Keypair;
+    use salsa20::stream_cipher::{NewStreamCipher, SyncStreamCipher, SyncStreamCipherSeek};
+    use salsa20::{Key, XSalsa20};
+
+    #[test]
+    fn test_encrypting_with_ed25519_keys() {
+        let src = b"Me main bitcoin wallet key";
+        let mut data = src.clone();
+
+        let mut rng = rand::thread_rng();
+        let keypair: Keypair = Keypair::generate(&mut rng);
+
+        let key = Key::from_slice(keypair.secret.as_bytes());
+        let nonce = crypto_box::generate_nonce(&mut rng);
+
+        // create cipher instance
+        let mut cipher = XSalsa20::new(&key, &nonce);
+
+        // apply keystream (encrypt)
+        cipher.apply_keystream(&mut data);
+        // seek to the keystream beginning and apply it again to the `data` (decrypt)
+        cipher.seek(0);
+        cipher.apply_keystream(&mut data);
+        assert_eq!(data, src.clone());
+    }
+}
