@@ -1,4 +1,4 @@
-mod primitive;
+mod data;
 
 fn main() {
     println!("Hello, world!");
