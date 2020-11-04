@@ -1,10 +1,9 @@
+use serde::{Deserialize, Serialize};
 use std::fmt::Display;
+
 /// The parametrizing types can be assumed as Node **M**etadata and Data **V**alue
-pub enum Element<M, V>
-where
-    M: Display,
-    V: Display,
-{
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+pub enum Element<M: Display, V: Display> {
     Node(M, Vec<Element<M, V>>),
     Data(V),
 }
@@ -102,7 +101,11 @@ impl<M: Display, V: Display> Element<M, V> {
     }
 }
 
-impl<M: Display, V: Display> Display for Element<M, V> {
+impl<M, V> Display for Element<M, V>
+where
+    M: Display + Serialize,
+    V: Display + Serialize,
+{
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Element::Data(ref d) => write!(f, "data {}", d),
@@ -116,8 +119,10 @@ impl<M: Display, V: Display> Display for Element<M, V> {
 #[cfg(test)]
 mod tests {
     use super::Element;
+    use serde::{Deserialize, Serialize};
     use std::fmt::Display;
 
+    #[derive(Serialize, Deserialize)]
     pub struct TestValue {
         pub title: String,
         pub name: Vec<u8>,
@@ -140,6 +145,7 @@ mod tests {
         }
     }
 
+    #[derive(Serialize, Deserialize)]
     pub struct TestMeta {
         pub title: String,
     }

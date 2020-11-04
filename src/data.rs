@@ -1,10 +1,11 @@
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::Display;
 
 mod primitive;
 pub mod tree_storage;
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct DataValue {
     pub title: String,
     pub name: Vec<u8>,
@@ -50,7 +51,7 @@ impl Display for DataValue {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct NodeMeta {
     pub title: String,
 }
@@ -89,4 +90,19 @@ fn test_data_constructing_and_display() {
         "some data: data name, 15-byte password"
     );
     assert_eq!(format!("{}", node), "node: some node info, children: 1");
+}
+
+#[test]
+fn test_de_serializing() {
+    println!("Hello, world!");
+    let root = crate::mock_data::get_mock_data();
+    let maybe_json = serde_json::to_string(&root);
+    assert!(maybe_json.is_ok());
+    let json = maybe_json.unwrap();
+    assert!(json.len() > 0);
+
+    let maybe_restored = serde_json::from_str::<TreeElement>(json.as_str());
+    assert!(maybe_restored.is_ok());
+    let restored = maybe_restored.unwrap();
+    assert_eq!(root, restored);
 }

@@ -83,10 +83,11 @@ mod test_hashing {
     #[test]
     fn test_hash_wrapping() {
         let hash = Code::Blake2b256.digest(b"hello world");
-        assert_eq!(hash.code(), Code::Blake2b256.into());
+        let blake2b256_code: u64 = Code::Blake2b256.into();
+        assert_eq!(hash.code(), blake2b256_code);
         let wrapped = Multihash::wrap(Code::Blake2b256.into(), &hash.digest()).unwrap();
         assert_eq!(wrapped, hash);
-        assert_eq!(wrapped.code(), Code::Blake2b256.into());
+        assert_eq!(wrapped.code(), blake2b256_code);
     }
 }
 
