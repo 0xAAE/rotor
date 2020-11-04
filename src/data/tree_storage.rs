@@ -1,16 +1,23 @@
+use serde::{Deserialize, Serialize};
 use std::fmt::Display;
+
 /// The parametrizing types can be assumed as Node **M**etadata and Data **V**alue
-pub enum Element<M, V>
+//#[derive(Serialize, Deserialize)]
+pub enum Element<'de, M, V>
 where
-    M: Display,
-    V: Display,
+    M: Display + Serialize + Deserialize<'de>,
+    V: Display + Serialize + Deserialize<'de>,
 {
-    Node(M, Vec<Element<M, V>>),
+    Node(M, Vec<Element<'de, M, V>>),
     Data(V),
 }
 
-impl<M: Display, V: Display> Element<M, V> {
-    pub fn add_child(&mut self, node: Element<M, V>) -> Result<(), String> {
+impl<'de, M: Display, V: Display> Element<'de, M, V>
+where
+    M: Display + Serialize + Deserialize<'de>,
+    V: Display + Serialize + Deserialize<'de>,
+{
+    pub fn add_child(&mut self, node: Element<'de, M, V>) -> Result<(), String> {
         match self {
             Element::Data(_) => Err("cannot add child to data node".into()),
             Element::Node(ref _meta, ref mut children) => {
@@ -102,7 +109,11 @@ impl<M: Display, V: Display> Element<M, V> {
     }
 }
 
-impl<M: Display, V: Display> Display for Element<M, V> {
+impl<'de, M, V> Display for Element<'de, M, V>
+where
+    M: Display + Serialize + Deserialize<'de>,
+    V: Display + Serialize + Deserialize<'de>,
+{
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Element::Data(ref d) => write!(f, "data {}", d),
@@ -116,8 +127,10 @@ impl<M: Display, V: Display> Display for Element<M, V> {
 #[cfg(test)]
 mod tests {
     use super::Element;
+    use serde::{Deserialize, Serialize};
     use std::fmt::Display;
 
+    #[derive(Serialize, Deserialize)]
     pub struct TestValue {
         pub title: String,
         pub name: Vec<u8>,
@@ -158,7 +171,7 @@ mod tests {
         }
     }
 
-    pub type TestElement = Element<TestMeta, TestValue>;
+    pub type TestElement = Element<'static, TestMeta, TestValue>;
 }
 
 #[test]
