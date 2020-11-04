@@ -94,7 +94,7 @@ mod test_hashing {
 mod test_salsa20 {
     use ed25519_dalek::Keypair;
     use rand::rngs::OsRng;
-    use salsa20::stream_cipher::{NewStreamCipher, SyncStreamCipher, SyncStreamCipherSeek};
+    use salsa20::cipher::{NewStreamCipher, SyncStreamCipher, SyncStreamCipherSeek};
     use salsa20::{Key, Nonce, Salsa20};
 
     #[test]
@@ -223,7 +223,7 @@ mod test_base58 {
 #[cfg(test)]
 mod test_mixed {
     use ed25519_dalek::Keypair;
-    use salsa20::stream_cipher::{NewStreamCipher, SyncStreamCipher, SyncStreamCipherSeek};
+    use salsa20::cipher::{NewStreamCipher, SyncStreamCipher, SyncStreamCipherSeek};
     use salsa20::{Key, XSalsa20};
 
     #[test]
