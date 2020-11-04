@@ -5,7 +5,7 @@ use std::fmt::Display;
 mod primitive;
 pub mod tree_storage;
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct DataValue {
     pub title: String,
     pub name: Vec<u8>,
@@ -51,7 +51,7 @@ impl Display for DataValue {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct NodeMeta {
     pub title: String,
 }
@@ -100,4 +100,9 @@ fn test_de_serializing() {
     assert!(maybe_json.is_ok());
     let json = maybe_json.unwrap();
     assert!(json.len() > 0);
+
+    let maybe_restored = serde_json::from_str::<TreeElement>(json.as_str());
+    assert!(maybe_restored.is_ok());
+    let restored = maybe_restored.unwrap();
+    assert_eq!(root, restored);
 }

@@ -2,21 +2,13 @@ use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 
 /// The parametrizing types can be assumed as Node **M**etadata and Data **V**alue
-#[derive(Serialize)]
-pub enum Element<M, V>
-where
-    M: Display + Serialize,
-    V: Display + Serialize,
-{
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+pub enum Element<M: Display, V: Display> {
     Node(M, Vec<Element<M, V>>),
     Data(V),
 }
 
-impl<M: Display, V: Display> Element<M, V>
-where
-    M: Display + Serialize,
-    V: Display + Serialize,
-{
+impl<M: Display, V: Display> Element<M, V> {
     pub fn add_child(&mut self, node: Element<M, V>) -> Result<(), String> {
         match self {
             Element::Data(_) => Err("cannot add child to data node".into()),
