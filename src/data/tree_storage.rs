@@ -93,6 +93,13 @@ impl<M: Display, V: Display> Element<M, V> {
             },
         }
     }
+
+    pub fn get_data(&self) -> Option<&V> {
+        match self {
+            Element::Data(value) => Some(&value),
+            Element::Node(..) => None,
+        }
+    }
 }
 
 impl<M: Display, V: Display> Display for Element<M, V> {
