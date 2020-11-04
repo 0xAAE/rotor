@@ -9,7 +9,7 @@ edition = "2018"
 [dependencies]
 ed25519-dalek = "1"
 rand = "0.7"
-multihash = "0.11"
+multihash = "*"
 crypto_box = "0.3"
 salsa20 = "0.6"
 bs58 = "0.3"
