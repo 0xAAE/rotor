@@ -25,6 +25,17 @@ impl DataValue {
             extra: HashMap::new(),
         }
     }
+
+    pub fn new_site(title: &str, name: Vec<u8>, password: Vec<u8>, url: &str) -> Self {
+        DataValue {
+            title: title.to_string(),
+            name,
+            password,
+            url: url.to_string(),
+            expire: 0,
+            extra: HashMap::new(),
+        }
+    }
 }
 
 impl Display for DataValue {
